@@ -41,6 +41,11 @@ class RedditPort():
                           exception.response)
 
     def search(self, query):
+        """Search the subreddit with the query.
+
+        Args:
+            query (str): Search query
+        """
         submissions = []
         for result in self._subreddit.search(query):
             submissions.append(result)
@@ -71,3 +76,11 @@ class RedditPort():
 
     def _sort_submissions(self, submissions):
         sorted_subs = {'discussions': [], 'rewatches': []}
+        for sub in submissions:
+            normalised_title = sub.title.lower()
+            if normalised_title.find('[rewatch]') > -1:
+                sorted_subs['rewatches'].append(sub)
+            else:
+                sorted_subs['discussions'].append(sub)
+
+        return sorted_subs

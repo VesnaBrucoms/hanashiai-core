@@ -1,9 +1,9 @@
-FROM alpine:3.6
-
-RUN apk add --update python3
+FROM python:3.6
 
 COPY ./ /tmp/hanashiai_core/
 RUN pip3 install -r /tmp/hanashiai_core/requirements/base.txt
-RUN python3 /tmp/hanashiai_core/setup.py install
+RUN pip3 install /tmp/hanashiai_core/.
 
 RUN rm -rf /tmp/hanashiai_core
+
+COPY ./misc/ /opt/tests/
