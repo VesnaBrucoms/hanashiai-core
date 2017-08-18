@@ -49,6 +49,9 @@ class RedditPort():
         """
         submissions = []
         try:
+            logging.info('Searching %s with query "%s"...',
+                         self._subreddit.name,
+                         query)
             for result in self._subreddit.search(query):
                 submissions.append(result)
         except ResponseException as exception:
@@ -63,8 +66,8 @@ class RedditPort():
                 logging.error(err_msg)
 
         filtered_subs = self._filter_submissions(submissions)
-        ordered_subs = self._order_submissions(filtered_subs)
-        sorted_subs = self._sort_submissions(ordered_subs)
+        filtered_subs.sort(key=_get_order_key)
+        sorted_subs = self._sort_submissions(filtered_subs)
 
         return sorted_subs
 
@@ -87,10 +90,6 @@ class RedditPort():
 
         return filtered_subs
 
-    def _order_submissions(self, submissions):
-        submissions.sort(key=_order_key)
-        return submissions
-
     def _sort_submissions(self, submissions):
         sorted_subs = {'discussions': [], 'rewatches': []}
         for sub in submissions:
@@ -103,14 +102,16 @@ class RedditPort():
         return sorted_subs
 
 
-def _order_key(value):
-    print(value.title)
+def _get_order_key(value):
     regex = r'(((E|e)pisode|(E|e)p|OVA|ova)\s)([0-9]{1,4})(\s(D|d)iscussion)*'
     match_groups = re.search(regex, value.title)
-    print(match_groups)
-    # print(match_groups.group[3])
 
+    order_key = 0
     if match_groups is None:
-        return 1000
+        order_key = 5000
     else:
-        return int(match_groups.groups()[4])
+        order_key = int(match_groups.groups()[4])
+        if match_groups.groups()[1].lower() == 'ova':
+            order_key = order_key + 1000
+
+    return order_key

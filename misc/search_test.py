@@ -6,7 +6,7 @@ reddit = RedditPort(name='Hanashiai',
                     author='HanashiaiDev')
 
 reddit.connect('anime')
-results = reddit.search('attack on titan discussion')
+results = reddit.search('knights of sidonia discussion')
 print('Discussions\n')
 for dis in results['discussions']:
     print(dis.title)
