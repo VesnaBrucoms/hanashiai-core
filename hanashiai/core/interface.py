@@ -6,6 +6,9 @@ import re
 import praw
 from prawcore.exceptions import ResponseException
 
+from .exceptions import RedditResponseError
+from .models import Comment
+
 
 class RedditPort():
 
@@ -20,7 +23,7 @@ class RedditPort():
         self._reddit = None
         self._subreddit = None
 
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.DEBUG)
 
     def connect(self, subreddit):
         """Connect to reddit and retreive subreddit.
@@ -28,21 +31,17 @@ class RedditPort():
         Args:
             subreddit (str): Name of the subreddit to retreive
         """
-        try:
-            self._reddit = praw.Reddit(client_id=self._client_id,
-                                       client_secret=self._client_secret,
-                                       user_agent=self._user_agent)
-            logging.info('Connected to reddit with user agent: %s',
-                         self._user_agent)
-        except ResponseException as exception:
-            logging.error('Connecting returned HTTP response: %s',
-                          exception.response.status_code)
+        self._reddit = praw.Reddit(client_id=self._client_id,
+                                   client_secret=self._client_secret,
+                                   user_agent=self._user_agent)
+        logging.info('Created reddit instance with user agent: %s',
+                     self._user_agent)
 
         self._subreddit = self._reddit.subreddit(subreddit)
-        logging.info('Set subreddit to: %s', subreddit)
+        logging.info('Set subreddit to "%s"', subreddit)
 
     def search(self, query):
-        """Search the subreddit with the query.
+        """Search subreddit with the query.
 
         Args:
             query (str): Search query
@@ -52,24 +51,71 @@ class RedditPort():
             logging.info('Searching %s with query "%s"...',
                          self._subreddit.name,
                          query)
-            for result in self._subreddit.search(query):
+            for result in self._subreddit.search(query, limit=300):
                 submissions.append(result)
+
+            logging.info('Returned %i results', len(submissions))
         except ResponseException as exception:
             http_code = exception.response.status_code
-            err_msg = 'Search with query "{}" returned HTTP {}'.format(query,
-                                                                       http_code)
+            error_msg = 'Search with query "{}" returned HTTP {}'.format(query,
+                                                                         http_code)
             if http_code == 401:
-                logging.error('%s, you are unauthorised', err_msg)
+                logging.error('%s, you are unauthorised to connect to reddit'
+                              ', are you using the correct ID and secret?', error_msg)
             elif http_code == 302:
-                logging.error('%s, subreddit may not exist', err_msg)
+                logging.error('%s, subreddit may not exist', error_msg)
             else:
-                logging.error(err_msg)
+                logging.error(error_msg)
+
+            raise RedditResponseError(error_msg)
 
         filtered_subs = self._filter_submissions(submissions)
         filtered_subs.sort(key=_get_order_key)
         sorted_subs = self._sort_submissions(filtered_subs)
 
         return sorted_subs
+
+    def get_submission_comments(self, sub_id, replace_limit=0):
+        """Get comments for passed submission.
+
+        Args:
+            sub_id (str): the submission's ID
+
+        Kwargs:
+            replace_limit (int): the number of "More comments" objects to
+                                 replace, defaults to 0
+
+        Returns:
+            comments (Comment list): list of Hanashiai - Core Comment
+                                     objects
+        """
+        submission = self._reddit.submission(id=sub_id)
+        try:
+            submission.comments.replace_more(limit=replace_limit)
+        except ResponseException as exception:
+            http_code = exception.response.status_code
+            error_msg = 'Attempt to retreive submission "{}" returned HTTP {}' \
+                        .format(sub_id, http_code)
+            logging.error(error_msg)
+            raise RedditResponseError(error_msg)
+
+        comments = []
+        for comment in submission.comments:
+            comments.append(Comment(comment.body))
+            if len(comment.replies) > 0:
+                comments.extend(self._add_replies(comment, 1))
+
+        return comments
+
+    def _add_replies(self, parent_comment, level, limit=3):
+        comments = []
+        for reply in parent_comment.replies:
+            comments.append(Comment(reply.body, level))
+            next_level = level + 1
+            if len(reply.replies) > 0 and next_level <= limit:
+                comments.extend(self._add_replies(reply, next_level))
+
+        return comments
 
     def _filter_submissions(self, submissions):
         filtered_subs = []
