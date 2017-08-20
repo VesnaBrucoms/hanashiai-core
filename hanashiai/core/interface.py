@@ -76,6 +76,19 @@ class RedditPort():
         return sorted_subs
 
     def get_submission_comments(self, sub_id, replace_limit=0):
+        """Get comments for passed submission.
+
+        Args:
+            sub_id (str): the submission's ID
+
+        Kwargs:
+            replace_limit (int): the number of "More comments" objects to
+                                 replace, defaults to 0
+
+        Returns:
+            comments (Comment list): list of Hanashiai - Core Comment
+                                     objects
+        """
         submission = self._reddit.submission(id=sub_id)
         try:
             submission.comments.replace_more(limit=replace_limit)
