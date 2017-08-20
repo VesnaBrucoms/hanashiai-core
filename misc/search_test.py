@@ -20,7 +20,9 @@ comments = reddit.get_submission_comments(results['discussions'][0])
 print(results['discussions'][0].title)
 count = 0
 for comment in comments:
+    print('[COMMENT]')
     print(comment.body)
+    print(comment.level)
     count = count + 1
     if count == 10:
         break

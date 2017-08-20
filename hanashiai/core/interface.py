@@ -7,6 +7,7 @@ import praw
 from prawcore.exceptions import ResponseException
 
 from .exceptions import RedditResponseError
+from .models import Comment
 
 
 class RedditPort():
@@ -87,7 +88,19 @@ class RedditPort():
 
         comments = []
         for comment in submission.comments:
-            comments.append(comment)
+            comments.append(Comment(comment.body))
+            if len(comment.replies) > 0:
+                comments.extend(self._add_replies(comment, 1))
+
+        return comments
+
+    def _add_replies(self, parent_comment, level, limit=3):
+        comments = []
+        for reply in parent_comment.replies:
+            comments.append(Comment(reply.body, level))
+            next_level = level + 1
+            if len(reply.replies) > 0 and next_level <= limit:
+                comments.extend(self._add_replies(reply, next_level))
 
         return comments
 
