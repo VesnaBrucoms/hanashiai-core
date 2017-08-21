@@ -1,13 +1,13 @@
 import time
-from hanashiai.core.interface import RedditPort
+from hanashiai.core.interface import Subreddit
 
 
-reddit = RedditPort(name='Hanashiai',
-                    version='0.0.1',
-                    author='HanashiaiDev')
+sr_anime = Subreddit(subreddit='anime',
+                   app_name='Hanashiai',
+                   app_version='0.0.1',
+                   app_author='HanashiaiDev')
 
-reddit.connect('anime')
-results = reddit.search('knights of sidonia discussion')
+results = sr_anime.search('knights of sidonia discussion')
 print('\nDiscussions:')
 for dis in results['discussions']:
     print(dis.title)
@@ -16,7 +16,7 @@ print('\nRewatches:')
 for dis in results['rewatches']:
     print(dis.title)
 
-comments = reddit.get_submission_comments(results['discussions'][0])
+comments = sr_anime.get_submission_comments(results['discussions'][0])
 print(results['discussions'][0].title)
 count = 0
 for comment in comments:
