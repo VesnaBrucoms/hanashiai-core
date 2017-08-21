@@ -6,7 +6,18 @@ class HanashiaiCoreError(Exception):
 
 
 class RedditResponseError(HanashiaiCoreError):
-    """Error raised when there is a failure to connect to reddit."""
+    """Raised when there is a failure to connect to Reddit.
+
+    This error is raised when the response from Reddit is anything
+    other than 200.
+
+    Args:
+        message (str): The error message
+
+    Attributes:
+        message (str): The error message
+        code (str): The error code
+    """
 
     def __init__(self, message):
         self.message = message

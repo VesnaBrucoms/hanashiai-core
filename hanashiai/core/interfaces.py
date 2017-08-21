@@ -1,3 +1,8 @@
+"""Hanashiai - Core interfaces module.
+
+This module contains classes to easily interface with key elements
+of Reddit, such as a subreddit.
+"""
 import logging
 import os
 import platform
@@ -33,7 +38,10 @@ class Subreddit():
         logging.info('Subreddit set to "/r/%s"', subreddit)
 
     def search(self, query):
-        """Search subreddit with the query.
+        """Search the subreddit with the passed query.
+
+        Searches the subreddit with the query, and then filters,
+        orders, and sorts the results before returning to the caller.
 
         Args:
             query (str): Search query
@@ -68,7 +76,10 @@ class Subreddit():
         return sorted_subs
 
     def get_submission_comments(self, sub_id, replace_limit=0):
-        """Get comments for passed submission.
+        """Get the comments for passed submission.
+
+        Returns the comments and their replies from the submission
+        specified via the submission's ID.
 
         Args:
             sub_id (str): the submission's ID
