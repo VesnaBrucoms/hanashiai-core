@@ -1,6 +1,18 @@
 # Hanashiai - Core
 
-[![Version](https://img.shields.io/badge/version-0.0.2-green.svg)](https://github.com/VesnaBrucoms/hanashiai-core)
+[![Version](https://img.shields.io/badge/version-0.0.3-brightgreen.svg)](https://github.com/VesnaBrucoms/hanashiai-core)
 [![Build Status](https://travis-ci.org/VesnaBrucoms/hanashiai-core.svg?branch=master)](https://travis-ci.org/VesnaBrucoms/hanashiai-core)
 
-_The core functionality for interacting with reddit for Hanashiai._
+The core functionality for interacting with Reddit for Hanashiai.
+
+## Install
+
+Hanashiai - Core can be found on PyPi:
+
+```
+pip install hanashiai-core
+```
+
+## License
+
+[MIT](LICENSE) (c) Trevalyan Stevens

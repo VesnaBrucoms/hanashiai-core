@@ -1,3 +1,8 @@
+"""Hanashiai - Core interfaces module.
+
+This module contains classes to easily interface with key elements
+of Reddit, such as a subreddit.
+"""
 import logging
 import os
 import platform
@@ -10,27 +15,24 @@ from .exceptions import RedditResponseError
 from .models import Comment
 
 
-class RedditPort():
+class Subreddit():
+    """Provides an interface to a specfied subreddit.
 
-    def __init__(self, name, version, author):
+    Allows easy access to common tasks such as searching and retreiving
+    a submission's comments.
+    """
+
+    def __init__(self, subreddit, app_name, app_version, app_author):
         self._client_id = os.environ.get('CLIENT_ID', None)
         self._client_secret = os.environ.get('CLIENT_SECRET', None)
-        self._user_agent = '{}:{}:{} (by /u/{})'.format(platform.system().lower(),
-                                                        name,
-                                                        version,
-                                                        author)
-
-        self._reddit = None
-        self._subreddit = None
+        platform_name = platform.system().lower()
+        self._user_agent = '{}:{}:{} (by /u/{})'.format(platform_name,
+                                                        app_name,
+                                                        app_version,
+                                                        app_author)
 
         logging.basicConfig(level=logging.DEBUG)
 
-    def connect(self, subreddit):
-        """Connect to reddit and retreive subreddit.
-
-        Args:
-            subreddit (str): Name of the subreddit to retreive
-        """
         self._reddit = praw.Reddit(client_id=self._client_id,
                                    client_secret=self._client_secret,
                                    user_agent=self._user_agent)
@@ -38,10 +40,13 @@ class RedditPort():
                      self._user_agent)
 
         self._subreddit = self._reddit.subreddit(subreddit)
-        logging.info('Set subreddit to "%s"', subreddit)
+        logging.info('Subreddit set to "/r/%s"', subreddit)
 
     def search(self, query):
-        """Search subreddit with the query.
+        """Search the subreddit with the passed query.
+
+        Searches the subreddit with the query, and then filters,
+        orders, and sorts the results before returning to the caller.
 
         Args:
             query (str): Search query
@@ -76,7 +81,10 @@ class RedditPort():
         return sorted_subs
 
     def get_submission_comments(self, sub_id, replace_limit=0):
-        """Get comments for passed submission.
+        """Get the comments for passed submission.
+
+        Returns the comments and their replies from the submission
+        specified via the submission's ID.
 
         Args:
             sub_id (str): the submission's ID
@@ -104,16 +112,6 @@ class RedditPort():
             comments.append(Comment(comment.body))
             if len(comment.replies) > 0:
                 comments.extend(self._add_replies(comment, 1))
-
-        return comments
-
-    def _add_replies(self, parent_comment, level, limit=3):
-        comments = []
-        for reply in parent_comment.replies:
-            comments.append(Comment(reply.body, level))
-            next_level = level + 1
-            if len(reply.replies) > 0 and next_level <= limit:
-                comments.extend(self._add_replies(reply, next_level))
 
         return comments
 
@@ -146,6 +144,16 @@ class RedditPort():
                 sorted_subs['discussions'].append(sub)
 
         return sorted_subs
+
+    def _add_replies(self, parent_comment, level, limit=3):
+        comments = []
+        for reply in parent_comment.replies:
+            comments.append(Comment(reply.body, level))
+            next_level = level + 1
+            if len(reply.replies) > 0 and next_level <= limit:
+                comments.extend(self._add_replies(reply, next_level))
+
+        return comments
 
 
 def _get_order_key(value):
