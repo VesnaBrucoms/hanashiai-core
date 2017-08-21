@@ -16,6 +16,11 @@ from .models import Comment
 
 
 class Subreddit():
+    """Provides an interface to a specfied subreddit.
+
+    Allows easy access to common tasks such as searching and retreiving
+    a submission's comments.
+    """
 
     def __init__(self, subreddit, app_name, app_version, app_author):
         self._client_id = os.environ.get('CLIENT_ID', None)

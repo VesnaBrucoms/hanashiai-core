@@ -1,6 +1,6 @@
 # Hanashiai - Core
 
-[![Version](https://img.shields.io/badge/version-0.0.2-brightgreen.svg)](https://github.com/VesnaBrucoms/hanashiai-core)
+[![Version](https://img.shields.io/badge/version-0.0.3-brightgreen.svg)](https://github.com/VesnaBrucoms/hanashiai-core)
 [![Build Status](https://travis-ci.org/VesnaBrucoms/hanashiai-core.svg?branch=master)](https://travis-ci.org/VesnaBrucoms/hanashiai-core)
 
 The core functionality for interacting with Reddit for Hanashiai.
