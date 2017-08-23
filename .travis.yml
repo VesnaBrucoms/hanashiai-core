@@ -8,3 +8,12 @@ install:
   - pip install .
 
 script: 'python --version'
+
+deploy:
+  provider: pypi
+  distributions: 'sdist bdist_wheel'
+  user: 'VesnaBrucoms'
+  password:
+    secure: "PFNtYnDurhR5gV8vTugrPLki+feLfP6pYxd+CK6AqifVUNpv+Wzyuhlm2hhleBnuFC+tAoOy/yjA9OHKWEKwb38tTtVXQjY1Yw/Sf+y3ZQZbK3MIx85bPhiQ5x0b29jPwx3iywgz4esH2E8X6VTz6WM8HsxkPp773Msc2tWDGkdbhe2ShqD33fj/135eH+IrO5ijZWNMBdUTPBLNrTMQoL61l+IF5T2IeIIqBWfk4ca8Qf6AoY8Qg0B+cwH2ZAcEoyoMogsdIkmiEVg+Yd6CGP7Vkj7Xf3ra1F9dWWP8T/I6mPw6Dt2LWURHqF+4kkb08PONVJEioto3EmDhzodQJWNdoXYaRIbUUWsX9uXinwnHBAngpWfDiqZohubuq83cGaMNDds+rt/CnP/L/mr88Hrpil03OD9NRnXEsBRI8ySQLH+fgy9ifffNYqC+r/LV4/A0DOvPT0BLFqPRMU8AOv8Faq5q1kOMDjn5y0VKHurk9/V98BaSDQYsR8k0OCzF/SVuc8kspyY0QWlnCM48FOzGhh3t1Kk+2OKmwCGoCRuQdf95qGLAjWS6KPecVg/lwmagogNeCon+msiXMcgg+cwPv9GC2eK2ej3XL2EhHa1hPhtGlMbMKd1lOWDeUPT2QVItIG50fuV5NgRtRxhN44Q8aiCPe4gxfZDgmN0Sd4o="
+  on:
+    branch: master

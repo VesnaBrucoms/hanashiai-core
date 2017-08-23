@@ -12,6 +12,7 @@ setup(
 
     author='Trevalyan Stevens',
     author_email='etstevens60@gmail.com',
+    url='http://www.kerneweksoftware.com/software.html',
 
     classifiers=[
         'Programming Language :: Python',
