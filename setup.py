@@ -8,6 +8,9 @@ setup(
     description='Reddit API interface for Hanashiai',
     license='MIT',
 
+    install_requires=[
+        'praw==5.0.1'
+    ],
     packages=find_packages(exclude=['docs', 'tests']),
 
     author='Trevalyan Stevens',
