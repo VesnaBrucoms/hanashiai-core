@@ -23,6 +23,8 @@ for comment in comments:
     print('[COMMENT]')
     print(comment.body)
     print(comment.level)
+    print(comment.author)
+    print(comment.created_utc)
     count = count + 1
     if count == 10:
         break

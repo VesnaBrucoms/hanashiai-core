@@ -7,6 +7,7 @@ import logging
 import os
 import platform
 import re
+from datetime import datetime
 
 import praw
 from prawcore.exceptions import ResponseException
@@ -109,7 +110,10 @@ class Subreddit():
 
         comments = []
         for comment in submission.comments:
-            comments.append(Comment(comment.body))
+            created_utc = datetime.fromtimestamp(comment.created_utc)
+            comments.append(Comment(comment.body,
+                                    author=str(comment.author),
+                                    created_utc=created_utc))
             if len(comment.replies) > 0:
                 comments.extend(self._add_replies(comment, 1))
 
@@ -148,7 +152,11 @@ class Subreddit():
     def _add_replies(self, parent_comment, level, limit=3):
         comments = []
         for reply in parent_comment.replies:
-            comments.append(Comment(reply.body, level))
+            created_utc = datetime.fromtimestamp(reply.created_utc)
+            comments.append(Comment(reply.body,
+                                    level=level,
+                                    author=str(reply.author),
+                                    created_utc=created_utc))
             next_level = level + 1
             if len(reply.replies) > 0 and next_level <= limit:
                 comments.extend(self._add_replies(reply, next_level))
