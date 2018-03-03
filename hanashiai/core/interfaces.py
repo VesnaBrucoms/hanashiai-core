@@ -7,6 +7,7 @@ import logging
 import os
 import platform
 import re
+from datetime import datetime
 
 import praw
 from prawcore.exceptions import ResponseException
@@ -62,8 +63,8 @@ class Subreddit():
             logging.info('Returned %i results', len(submissions))
         except ResponseException as exception:
             http_code = exception.response.status_code
-            error_msg = 'Search with query "{}" returned HTTP {}'.format(query,
-                                                                         http_code)
+            error_msg = 'Search with query "{}" returned HTTP {}' \
+                        .format(query, http_code)
             if http_code == 401:
                 logging.error('%s, you are unauthorised to connect to reddit'
                               ', are you using the correct ID and secret?', error_msg)
@@ -102,14 +103,18 @@ class Subreddit():
             submission.comments.replace_more(limit=replace_limit)
         except ResponseException as exception:
             http_code = exception.response.status_code
-            error_msg = 'Attempt to retreive submission "{}" returned HTTP {}' \
-                        .format(sub_id, http_code)
+            error_msg = 'Attempt to retreive submission "{}" returned ' \
+                        'HTTP {}'.format(sub_id, http_code)
             logging.error(error_msg)
             raise RedditResponseError(error_msg)
 
         comments = []
         for comment in submission.comments:
-            comments.append(Comment(comment.body))
+            created_utc = datetime.fromtimestamp(comment.created_utc)
+            comments.append(Comment(comment.body,
+                                    body_html=comment.body_html,
+                                    author=str(comment.author),
+                                    created_utc=created_utc))
             if len(comment.replies) > 0:
                 comments.extend(self._add_replies(comment, 1))
 
@@ -148,7 +153,12 @@ class Subreddit():
     def _add_replies(self, parent_comment, level, limit=3):
         comments = []
         for reply in parent_comment.replies:
-            comments.append(Comment(reply.body, level))
+            created_utc = datetime.fromtimestamp(reply.created_utc)
+            comments.append(Comment(reply.body,
+                                    level=level,
+                                    body_html=reply.body_html,
+                                    author=str(reply.author),
+                                    created_utc=created_utc))
             next_level = level + 1
             if len(reply.replies) > 0 and next_level <= limit:
                 comments.extend(self._add_replies(reply, next_level))
