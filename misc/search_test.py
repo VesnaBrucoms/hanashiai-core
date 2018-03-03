@@ -23,6 +23,7 @@ for comment in comments:
     print('[COMMENT]')
     print(comment.body)
     print(comment.level)
+    print(comment.body_html)
     print(comment.author)
     print(comment.created_utc)
     count = count + 1

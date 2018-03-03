@@ -63,8 +63,8 @@ class Subreddit():
             logging.info('Returned %i results', len(submissions))
         except ResponseException as exception:
             http_code = exception.response.status_code
-            error_msg = 'Search with query "{}" returned HTTP {}'.format(query,
-                                                                         http_code)
+            error_msg = 'Search with query "{}" returned HTTP {}' \
+                        .format(query, http_code)
             if http_code == 401:
                 logging.error('%s, you are unauthorised to connect to reddit'
                               ', are you using the correct ID and secret?', error_msg)
@@ -103,8 +103,8 @@ class Subreddit():
             submission.comments.replace_more(limit=replace_limit)
         except ResponseException as exception:
             http_code = exception.response.status_code
-            error_msg = 'Attempt to retreive submission "{}" returned HTTP {}' \
-                        .format(sub_id, http_code)
+            error_msg = 'Attempt to retreive submission "{}" returned ' \
+                        'HTTP {}'.format(sub_id, http_code)
             logging.error(error_msg)
             raise RedditResponseError(error_msg)
 
@@ -112,6 +112,7 @@ class Subreddit():
         for comment in submission.comments:
             created_utc = datetime.fromtimestamp(comment.created_utc)
             comments.append(Comment(comment.body,
+                                    body_html=comment.body_html,
                                     author=str(comment.author),
                                     created_utc=created_utc))
             if len(comment.replies) > 0:
@@ -155,6 +156,7 @@ class Subreddit():
             created_utc = datetime.fromtimestamp(reply.created_utc)
             comments.append(Comment(reply.body,
                                     level=level,
+                                    body_html=reply.body_html,
                                     author=str(reply.author),
                                     created_utc=created_utc))
             next_level = level + 1
