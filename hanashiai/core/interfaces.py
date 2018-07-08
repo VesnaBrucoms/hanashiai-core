@@ -21,9 +21,16 @@ class Subreddit():
 
     Allows easy access to common tasks such as searching and retreiving
     a submission's comments.
+
+    Args:
+        subreddit_name (str): Name of the subreddit to interact with.
+        app_name (str): Name of the app as specified on Reddit.
+        app_version (str): App released version.
+        app_author (str): Reddit username app was created with.
     """
 
-    def __init__(self, subreddit, app_name, app_version, app_author):
+    def __init__(self, subreddit_name, app_name, app_version, app_author):
+        self._subreddit_name = subreddit_name
         self._client_id = os.environ.get('CLIENT_ID', None)
         self._client_secret = os.environ.get('CLIENT_SECRET', None)
         platform_name = platform.system().lower()
@@ -32,16 +39,22 @@ class Subreddit():
                                                         app_version,
                                                         app_author)
 
-        logging.basicConfig(level=logging.DEBUG)
+        self._reddit = None
+        self._subreddit = None
 
+        logging.basicConfig(level=logging.DEBUG)
+        self._logger = logging.getLogger(name='hanashiai-core')
+
+    def connect(self):
+        """Create reddit and subreddit instances."""
         self._reddit = praw.Reddit(client_id=self._client_id,
                                    client_secret=self._client_secret,
                                    user_agent=self._user_agent)
-        logging.info('Created reddit instance with user agent: %s',
-                     self._user_agent)
+        self._logger.info('Created reddit instance with user agent: %s',
+                          self._user_agent)
 
-        self._subreddit = self._reddit.subreddit(subreddit)
-        logging.info('Subreddit set to "/r/%s"', subreddit)
+        self._subreddit = self._reddit.subreddit(self._subreddit_name)
+        self._logger.info('Subreddit set to "/r/%s"', self._subreddit_name)
 
     def search(self, query):
         """Search the subreddit with the passed query.
@@ -51,27 +64,32 @@ class Subreddit():
 
         Args:
             query (str): Search query
+
+        Returns:
+            sorted_subs (dict): Dictionary of two lists. One with "discussions"
+                                as the key, and the other with "rewatches".
         """
         submissions = []
         try:
-            logging.info('Searching %s with query "%s"...',
-                         self._subreddit.name,
-                         query)
+            self._logger.info('Searching %s with query "%s"...',
+                              self._subreddit.name,
+                              query)
             for result in self._subreddit.search(query, limit=300):
                 submissions.append(result)
 
-            logging.info('Returned %i results', len(submissions))
+            self._logger.info('Returned %i results', len(submissions))
         except ResponseException as exception:
             http_code = exception.response.status_code
             error_msg = 'Search with query "{}" returned HTTP {}' \
                         .format(query, http_code)
             if http_code == 401:
-                logging.error('%s, you are unauthorised to connect to reddit'
-                              ', are you using the correct ID and secret?', error_msg)
+                self._logger.error('%s, you are unauthorised to connect to'
+                                   ' reddit, are you using the correct ID'
+                                   ' and secret?', error_msg)
             elif http_code == 302:
-                logging.error('%s, subreddit may not exist', error_msg)
+                self._logger.error('%s, subreddit may not exist', error_msg)
             else:
-                logging.error(error_msg)
+                self._logger.error(error_msg)
 
             raise RedditResponseError(error_msg)
 
@@ -105,7 +123,7 @@ class Subreddit():
             http_code = exception.response.status_code
             error_msg = 'Attempt to retreive submission "{}" returned ' \
                         'HTTP {}'.format(sub_id, http_code)
-            logging.error(error_msg)
+            self._logger.error(error_msg)
             raise RedditResponseError(error_msg)
 
         comments = []
@@ -135,7 +153,7 @@ class Subreddit():
                     break
 
             if filtered:
-                logging.info('Filtered submission: %s', sub.title)
+                self._logger.info('Filtered submission: %s', sub.title)
 
         return filtered_subs
 

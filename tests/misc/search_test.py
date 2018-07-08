@@ -1,11 +1,14 @@
 import time
+
+from hanashiai.core import library_details
 from hanashiai.core.interfaces import Subreddit
 
 
-sr_anime = Subreddit(subreddit='anime',
+sr_anime = Subreddit(subreddit_name='anime',
                      app_name='Hanashiai',
-                     app_version='0.0.1',
+                     app_version='core-{}'.format(library_details['version']),
                      app_author='HanashiaiDev')
+sr_anime.connect()
 
 results = sr_anime.search('knights of sidonia discussion')
 print('\nDiscussions:')
