@@ -1,10 +1,18 @@
+sudo: required
+
 language: python
+
+services:
+  - docker
+
+before_install:
+  - docker build -f Dockerfile-test -t hanashiai-core .
+  - docker run --rm hanashiai-core pytest /opt/tests/unit_tests/
 
 python:
   - '3.6'
 
 install:
-  - pip install -r ./requirements/base.txt
   - pip install .
 
 script: 'python --version'
