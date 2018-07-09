@@ -1,12 +1,12 @@
 FROM python:3.6
 
 COPY ./ /tmp/hanashiai_core/
-RUN pip3 install -r /tmp/hanashiai_core/requirements/base.txt
+RUN pip3 install -r /tmp/hanashiai_core/requirements/test.txt
 RUN pip3 install /tmp/hanashiai_core/.
 
 RUN rm -rf /tmp/hanashiai_core
 
 COPY ./tests/ /opt/tests/
 
-ENV CLIENT_ID id
-ENV CLIENT_SECRET secret
+ENV CLIENT_ID Ff3w7mxIoymn4g
+ENV CLIENT_SECRET r6RehJa9UenWuJALJet2L9dNPbM
