@@ -70,7 +70,7 @@ class Subreddit():
                                 as the key, and the other with "rewatches".
         """
         try:
-            self._logger.info('Searching %s with query "%s"...',
+            self._logger.info('Searching %s with query "%s"',
                               self._subreddit.name,
                               query)
             submissions = []
@@ -78,21 +78,12 @@ class Subreddit():
                 new_submission = Submission(result)
                 submissions.append(new_submission)
 
-            self._logger.info('Returned %i results', len(submissions))
+            self._logger.debug('Returned %i results', len(submissions))
         except ResponseException as exception:
             http_code = exception.response.status_code
             error_msg = 'Search with query "{}" returned HTTP {}' \
                         .format(query, http_code)
-            if http_code == 401:
-                self._logger.error('%s, you are unauthorised to connect to'
-                                   ' reddit, are you using the correct ID'
-                                   ' and secret?', error_msg)
-            elif http_code == 302:
-                self._logger.error('%s, subreddit may not exist', error_msg)
-            else:
-                self._logger.error(error_msg)
-
-            raise RedditResponseError(error_msg)
+            self._handle_exception(http_code, error_msg)
 
         filtered_subs = self._filter_submissions(submissions)
         self._last_search_cache = filtered_subs
@@ -164,6 +155,18 @@ class Subreddit():
         submission = Submission(searched_submission)
 
         return submission
+
+    def _handle_exception(self, http_code, message):
+        if http_code == 401:
+            self._logger.error('%s, you are unauthorised to connect to'
+                               ' reddit, are you using the correct ID'
+                               ' and secret?', message)
+        elif http_code == 302:
+            self._logger.error('%s, subreddit may not exist', message)
+        else:
+            self._logger.error(message)
+
+        raise RedditResponseError(message)
 
 
 def _get_order_key(value):
