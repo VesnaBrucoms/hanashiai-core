@@ -40,6 +40,7 @@ class Subreddit():
 
         self._reddit = None
         self._subreddit = None
+        self._last_search_cache = []
 
         logging.basicConfig(level=logging.DEBUG)
         self._logger = logging.getLogger(name='hanashiai-core')
@@ -94,10 +95,26 @@ class Subreddit():
             raise RedditResponseError(error_msg)
 
         filtered_subs = self._filter_submissions(submissions)
+        self._last_search_cache = filtered_subs
         filtered_subs.sort(key=_get_order_key)
         sorted_subs = self._sort_submissions(filtered_subs)
 
         return sorted_subs
+
+    def get_submission(self, submission_id):
+        """Get single submission from subreddit.
+
+        Args:
+            submission_id (str): Submission's unique identifier.
+        """
+        self._logger.info('Getting submission with id %s', submission_id)
+        submission = self._get_cached_submission(submission_id)
+        if not submission:
+            self._logger.debug('No cached submission with id %s, '
+                               'performing search', submission_id)
+            submission = self._search_single_submission(submission_id)
+
+        return submission
 
     def _filter_submissions(self, submissions):
         filtered_subs = []
@@ -114,7 +131,7 @@ class Subreddit():
                     break
 
             if filtered:
-                self._logger.info('Filtered submission: %s', sub.title)
+                self._logger.debug('Filtered submission: %s', sub.title)
 
         return filtered_subs
 
@@ -128,6 +145,25 @@ class Subreddit():
                 sorted_subs['discussions'].append(sub)
 
         return sorted_subs
+
+    def _get_cached_submission(self, submission_id):
+        self._logger.debug('Getting cached submission with id %s',
+                           submission_id)
+        submission = None
+        for cached_submission in self._last_search_cache:
+            if submission_id == cached_submission.id:
+                submission = cached_submission
+                break
+
+        return submission
+
+    def _search_single_submission(self, submission_id):
+        self._logger.debug('Searching for single submission with id %s',
+                           submission_id)
+        searched_submission = self._reddit.submission(id=submission_id)
+        submission = Submission(searched_submission)
+
+        return submission
 
 
 def _get_order_key(value):

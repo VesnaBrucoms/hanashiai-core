@@ -18,6 +18,10 @@ class Submission():
         self._logger = logging.getLogger(name='hanashiai-core')
 
     @property
+    def id(self):
+        return self._praw_submission.id
+
+    @property
     def title(self):
         return self._praw_submission.title
 
