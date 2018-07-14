@@ -25,6 +25,10 @@ class Submission():
     def title(self):
         return self._praw_submission.title
 
+    @property
+    def selftext(self):
+        return self._praw_submission.selftext_html
+
     def get_comments(self, replace_limit=0):
         """Get submission comments.
 

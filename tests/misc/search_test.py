@@ -24,6 +24,7 @@ sub = sr_anime.get_submission(sub_id)
 comments = sub.get_comments()
 print('\n')
 print(sub.title)
+print(sub.selftext)
 count = 0
 for comment in comments:
     print('[COMMENT]')
