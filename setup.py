@@ -9,7 +9,7 @@ setup(
     license='MIT',
 
     install_requires=[
-        'praw==5.0.1'
+        'praw==5.4.0'
     ],
     packages=find_packages(exclude=['docs', 'tests']),
 

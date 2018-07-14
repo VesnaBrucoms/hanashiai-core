@@ -13,14 +13,13 @@ import praw
 from prawcore.exceptions import ResponseException
 
 from .exceptions import RedditResponseError
-from .models import Comment
+from .models import Submission, Comment
 
 
 class Subreddit():
     """Provides an interface to a specfied subreddit.
 
-    Allows easy access to common tasks such as searching and retreiving
-    a submission's comments.
+    Allows easy access to common tasks such as searching submissions.
 
     Args:
         subreddit_name (str): Name of the subreddit to interact with.
@@ -41,6 +40,7 @@ class Subreddit():
 
         self._reddit = None
         self._subreddit = None
+        self._last_search_cache = []
 
         logging.basicConfig(level=logging.DEBUG)
         self._logger = logging.getLogger(name='hanashiai-core')
@@ -69,74 +69,43 @@ class Subreddit():
             sorted_subs (dict): Dictionary of two lists. One with "discussions"
                                 as the key, and the other with "rewatches".
         """
-        submissions = []
         try:
-            self._logger.info('Searching %s with query "%s"...',
+            self._logger.info('Searching %s with query "%s"',
                               self._subreddit.name,
                               query)
+            submissions = []
             for result in self._subreddit.search(query, limit=300):
-                submissions.append(result)
+                new_submission = Submission(result)
+                submissions.append(new_submission)
 
-            self._logger.info('Returned %i results', len(submissions))
+            self._logger.debug('Returned %i results', len(submissions))
         except ResponseException as exception:
             http_code = exception.response.status_code
             error_msg = 'Search with query "{}" returned HTTP {}' \
                         .format(query, http_code)
-            if http_code == 401:
-                self._logger.error('%s, you are unauthorised to connect to'
-                                   ' reddit, are you using the correct ID'
-                                   ' and secret?', error_msg)
-            elif http_code == 302:
-                self._logger.error('%s, subreddit may not exist', error_msg)
-            else:
-                self._logger.error(error_msg)
-
-            raise RedditResponseError(error_msg)
+            self._handle_exception(http_code, error_msg)
 
         filtered_subs = self._filter_submissions(submissions)
+        self._last_search_cache = filtered_subs
         filtered_subs.sort(key=_get_order_key)
         sorted_subs = self._sort_submissions(filtered_subs)
 
         return sorted_subs
 
-    def get_submission_comments(self, sub_id, replace_limit=0):
-        """Get the comments for passed submission.
-
-        Returns the comments and their replies from the submission
-        specified via the submission's ID.
+    def get_submission(self, submission_id):
+        """Get single submission from subreddit.
 
         Args:
-            sub_id (str): the submission's ID
-
-        Kwargs:
-            replace_limit (int): the number of "More comments" objects to
-                                 replace, defaults to 0
-
-        Returns:
-            comments (Comment list): list of Hanashiai - Core Comment
-                                     objects
+            submission_id (str): Submission's unique identifier.
         """
-        submission = self._reddit.submission(id=sub_id)
-        try:
-            submission.comments.replace_more(limit=replace_limit)
-        except ResponseException as exception:
-            http_code = exception.response.status_code
-            error_msg = 'Attempt to retreive submission "{}" returned ' \
-                        'HTTP {}'.format(sub_id, http_code)
-            self._logger.error(error_msg)
-            raise RedditResponseError(error_msg)
+        self._logger.info('Getting submission with id %s', submission_id)
+        submission = self._get_cached_submission(submission_id)
+        if not submission:
+            self._logger.debug('No cached submission with id %s, '
+                               'performing search', submission_id)
+            submission = self._search_single_submission(submission_id)
 
-        comments = []
-        for comment in submission.comments:
-            created_utc = datetime.fromtimestamp(comment.created_utc)
-            comments.append(Comment(comment.body,
-                                    body_html=comment.body_html,
-                                    author=str(comment.author),
-                                    created_utc=created_utc))
-            if len(comment.replies) > 0:
-                comments.extend(self._add_replies(comment, 1))
-
-        return comments
+        return submission
 
     def _filter_submissions(self, submissions):
         filtered_subs = []
@@ -153,7 +122,7 @@ class Subreddit():
                     break
 
             if filtered:
-                self._logger.info('Filtered submission: %s', sub.title)
+                self._logger.debug('Filtered submission: %s', sub.title)
 
         return filtered_subs
 
@@ -168,20 +137,36 @@ class Subreddit():
 
         return sorted_subs
 
-    def _add_replies(self, parent_comment, level, limit=3):
-        comments = []
-        for reply in parent_comment.replies:
-            created_utc = datetime.fromtimestamp(reply.created_utc)
-            comments.append(Comment(reply.body,
-                                    level=level,
-                                    body_html=reply.body_html,
-                                    author=str(reply.author),
-                                    created_utc=created_utc))
-            next_level = level + 1
-            if len(reply.replies) > 0 and next_level <= limit:
-                comments.extend(self._add_replies(reply, next_level))
+    def _get_cached_submission(self, submission_id):
+        self._logger.debug('Getting cached submission with id %s',
+                           submission_id)
+        submission = None
+        for cached_submission in self._last_search_cache:
+            if submission_id == cached_submission.id:
+                submission = cached_submission
+                break
 
-        return comments
+        return submission
+
+    def _search_single_submission(self, submission_id):
+        self._logger.debug('Searching for single submission with id %s',
+                           submission_id)
+        searched_submission = self._reddit.submission(id=submission_id)
+        submission = Submission(searched_submission)
+
+        return submission
+
+    def _handle_exception(self, http_code, message):
+        if http_code == 401:
+            self._logger.error('%s, you are unauthorised to connect to'
+                               ' reddit, are you using the correct ID'
+                               ' and secret?', message)
+        elif http_code == 302:
+            self._logger.error('%s, subreddit may not exist', message)
+        else:
+            self._logger.error(message)
+
+        raise RedditResponseError(message)
 
 
 def _get_order_key(value):

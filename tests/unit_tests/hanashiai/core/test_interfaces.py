@@ -40,3 +40,23 @@ class TestInterfaces(unittest.TestCase):
         expected_submissions = {'discussions': [mock_sub_one],
                                 'rewatches': [mock_sub_two]}
         self.assertEqual(expected_submissions, sorted_submissions)
+
+    def test_get_cached_submission(self):
+        mock_sub_one = mock.Mock()
+        mock_sub_one.id = '123ab'
+        mock_sub_two = mock.Mock()
+        mock_sub_two.id = '456cd'
+        self._subreddit._last_search_cache = [mock_sub_one, mock_sub_two]
+        returned_sub = self._subreddit._get_cached_submission('456cd')
+
+        self.assertEqual(mock_sub_two, returned_sub)
+
+    def test_get_cached_submission_failure(self):
+        mock_sub_one = mock.Mock()
+        mock_sub_one.id = '123ab'
+        mock_sub_two = mock.Mock()
+        mock_sub_two.id = '456cd'
+        self._subreddit._last_search_cache = [mock_sub_one, mock_sub_two]
+        returned_sub = self._subreddit._get_cached_submission('test')
+
+        self.assertEqual(None, returned_sub)
