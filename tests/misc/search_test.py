@@ -19,7 +19,7 @@ print('\nRewatches:')
 for rew in results['rewatches']:
     print(rew.title)
 
-comments = sr_anime.get_submission_comments(results['discussions'][0])
+comments = results['discussions'][0].get_comments()
 print(results['discussions'][0].title)
 count = 0
 for comment in comments:
