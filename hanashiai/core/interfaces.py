@@ -7,6 +7,7 @@ import logging
 import os
 import platform
 import re
+import time
 from datetime import datetime
 
 import praw
@@ -73,11 +74,14 @@ class Subreddit():
             self._logger.info('Searching %s with query "%s"',
                               self._subreddit.name,
                               query)
+            start_time = time.time()
             submissions = []
             for result in self._subreddit.search(query, limit=300):
                 new_submission = Submission(result)
                 submissions.append(new_submission)
 
+            end_time = time.time()
+            print('Duration: {}'.format(end_time - start_time))
             self._logger.debug('Returned %i results', len(submissions))
         except ResponseException as exception:
             http_code = exception.response.status_code
@@ -85,10 +89,34 @@ class Subreddit():
                         .format(query, http_code)
             self._handle_exception(http_code, error_msg)
 
-        filtered_subs = self._filter_submissions(submissions)
-        self._last_search_cache = filtered_subs
-        filtered_subs.sort(key=_get_order_key)
-        sorted_subs = self._sort_submissions(filtered_subs)
+        sorted_subs = self._filter_and_sort_submissions(submissions)
+
+        return sorted_subs
+
+    def search_multiple(self, queries):
+        try:
+            self._logger.info('Searching %s with queries %s',
+                              self._subreddit.name,
+                              queries)
+            start_time = time.time()
+            submissions = []
+            for query in queries:
+                self._logger.debug('Query: %s', query)
+                for result in self._subreddit.search(query, limit=300):
+                    if result.id not in map(lambda sub: sub.id, submissions):
+                        new_submission = Submission(result)
+                        submissions.append(new_submission)
+
+            end_time = time.time()
+            print('Duration: {}'.format(end_time - start_time))
+            self._logger.debug('Returned %i results', len(submissions))
+        except ResponseException as exception:
+            http_code = exception.response.status_code
+            error_msg = 'Search with queries {} returned HTTP {}' \
+                        .format(queries, http_code)
+            self._handle_exception(http_code, error_msg)
+
+        sorted_subs = self._filter_and_sort_submissions(submissions)
 
         return sorted_subs
 
@@ -107,6 +135,14 @@ class Subreddit():
 
         return submission
 
+    def _filter_and_sort_submissions(self, submissions):
+        filtered_subs = self._filter_submissions(submissions)
+        self._last_search_cache = filtered_subs
+        filtered_subs.sort(key=_get_order_key)
+        sorted_subs = self._sort_submissions(filtered_subs)
+
+        return sorted_subs
+
     def _filter_submissions(self, submissions):
         filtered_subs = []
         for sub in submissions:
@@ -121,8 +157,8 @@ class Subreddit():
                     filtered = False
                     break
 
-            if filtered:
-                self._logger.debug('Filtered submission: %s', sub.title)
+            # if filtered:
+            #     self._logger.debug('Filtered submission: %s', sub.title)
 
         return filtered_subs
 
